@@ -1,0 +1,4 @@
+- This is a Vue 3 project scaffolded manually.
+- Use `npm run dev` to start the development server with Vite.
+- The project includes `src/App.vue`, `src/main.js`, and an `index.html` entry point.
+- Add additional components under `src` as needed.
