@@ -1,6 +1,7 @@
 # Team Tournament Picker
 
-A simple Vue 3 project scaffolded manually.
+Pick logic:
+https://docs.google.com/document/d/1p3lyeCU3Dw9PP_GyNWz_cYtouSG7nGmI/edit
 
 ## Development
 
