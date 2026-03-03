@@ -80,54 +80,70 @@
 
     <!-- subsequent pairing steps -->
     <div v-else>
-      <h3>Pairing {{ pairingStep }}</h3>
-      <p>Defender: {{ pairingStep % 2 === 1 ? 'A' : 'B' }} – Attacker: {{ pairingStep % 2 === 1 ? 'B' : 'A' }}</p>
-      <!-- choose kill teams and map/mission according to the rules -->
-      <div class="pairing-actions">
-        <p>({{ teamForLetter('A') }}) Defender chooses 1 kill team from their pool:</p>
-        <select size="5" v-model="pairingData['defenderChoice' + pairingStep]">
-          <option v-for="team in poolA" :key="team" :value="team">{{ team }}</option>
-        </select>
-        <p>({{ teamForLetter('B') }}) Attacker chooses 2 kill teams from their pool:</p>
-        <div>
-          <select multiple size="5" v-model="pairingData['attackerOptions' + pairingStep]">
-            <option v-for="team in poolB" :key="team" :value="team">{{ team }}</option>
+      
+        <h3>Pairing {{ pairingStep }}</h3>
+        <p>Defender: {{ pairingStep % 2 === 1 ? 'A' : 'B' }} – Attacker: {{ pairingStep % 2 === 1 ? 'B' : 'A' }}</p>
+        <!-- choose kill teams and map/mission according to the rules -->
+        <div class="pairing-actions">
+          <div class="pairing-step"> 
+            <p >1. ({{ teamForLetter('A') }}) Defender chooses 1 kill team from their pool:</p>
+            <select size="5" v-model="pairingData['defenderChoice' + pairingStep]">
+              <option v-for="team in poolA" :key="team" :value="team">{{ team }}</option>
+            </select>
+          </div>
+          <div class="pairing-step">
+            <p>2. ({{ teamForLetter('B') }}) Attacker chooses 2 kill teams from their pool:</p>
+                        <p v-if="sideForRole('enemy')">
+              Suggestion: {{ suggestAttackerSelection(pairingData['defenderChoice' + pairingStep]) }}
+            </p>
+            <div>
+              <select multiple size="5" v-model="pairingData['attackerOptions' + pairingStep]">
+                <option v-for="team in poolB" :key="team" :value="team">{{ team }}</option>
+              </select>
+            </div>
+          </div>
+            <div class="pairing-step">
+
+
+          <p>3. ({{ teamForLetter('A') }}) Defender then picks one of the above for the matchup:</p>
+                      <p v-if="sideForRole('our')">
+              Suggestion: {{ suggestDefenderChoice(pairingData['defenderChoice' + pairingStep], pairingData['attackerOptions' + pairingStep] || []) }}
+            </p>
+          <select v-model="pairingData['attackerSelected' + pairingStep]">
+            <option v-for="team in pairingData['attackerOptions' + pairingStep] || []" :key="team" :value="team">{{ team }}</option>
           </select>
-        </div>
-          <p v-if="sideForRole('our')">
-            Suggestion: {{ suggestDefenderChoice(pairingData['defenderChoice' + pairingStep], pairingData['attackerOptions' + pairingStep] || []) }}
+            </div>
+          <div class="pairing-step">
+          <p>4. ({{ teamForLetter('B') }}) Attacker chooses a map from available maps:</p>
+          <p v-if="sideForRole('enemy') && pairingData['attackerSelected' + pairingStep]">
+            Suggested map: {{ recommendMap(pairingData['attackerSelected' + pairingStep], mapsPool) }}
           </p>
-          <p v-if="sideForRole('enemy')">
-            Suggestion: {{ suggestAttackerSelection(pairingData['defenderChoice' + pairingStep]) }}
-          </p>
-        <p>({{ teamForLetter('A') }}) Defender then picks one of the above for the matchup:</p>
-        <select v-model="pairingData['attackerSelected' + pairingStep]">
-          <option v-for="team in pairingData['attackerOptions' + pairingStep] || []" :key="team" :value="team">{{ team }}</option>
-        </select>
-        <p>({{ teamForLetter('B') }}) Attacker chooses a map from available maps:</p>
-        <select v-model="pairingData['map' + pairingStep]">
-          <option v-for="map in mapsPool" :key="map" :value="map">{{ map }}</option>
-        </select>
-        <p v-if="sideForRole('enemy') && pairingData['attackerSelected' + pairingStep]">
-          Suggested map: {{ recommendMap(pairingData['attackerSelected' + pairingStep], mapsPool) }}
-        </p>
-        <p>({{ teamForLetter('A') }}) Defender chooses a mission from pool:</p>
-        <select v-model="pairingData['mission' + pairingStep]">
-          <option v-for="m in missionsPool" :key="m" :value="m">{{ m }}</option>
-        </select>
-        <p v-if="sideForRole('our')">Suggested mission: {{ recommendMission(pairingData['defenderChoice' + pairingStep], missionsPool) }}</p>
-        <div v-if="pairingStep === 3">
-          <p>({{ teamForLetter('A') }}) Defender now bans another mission for the remaining process:</p>
-          <select v-model="pairingData.extraBan3">
-            <option value="" disabled>Select mission to ban</option>
+          <select v-model="pairingData['map' + pairingStep]">
+            <option v-for="map in mapsPool" :key="map" :value="map">{{ map }}</option>
+          </select>
+          
+          </div>
+          <div class="pairing-step">
+          <p>5. ({{ teamForLetter('A') }}) Defender chooses a mission from pool:</p>
+          <p v-if="sideForRole('our')">Suggested mission: {{ recommendMission(pairingData['defenderChoice' + pairingStep], missionsPool) }}</p>
+          <select v-model="pairingData['mission' + pairingStep]">
             <option v-for="m in missionsPool" :key="m" :value="m">{{ m }}</option>
           </select>
+          
+          </div>
+          <div class="pairing-step" v-if="pairingStep === 3">
+            <p >({{ teamForLetter('A') }}) Defender now bans another mission for the remaining process:</p>
+            <select v-model="pairingData.extraBan3">
+              <option value="" disabled>Select mission to ban</option>
+              <option v-for="m in missionsPool" :key="m" :value="m">{{ m }}</option>
+            </select>
+          </div>
         </div>
-      </div>
+
       <button @click="prevPairing">Previous</button>
       <button @click="nextPairing">Next</button>
     </div>
-    <div v-if="pairingStep > 6">
+    <div v-if="pairingStep > 5">
       <h3>Selection Complete</h3>
       <p>The pairing process is finished. Follow the initiative rules:</p>
       <ul>
@@ -260,11 +276,6 @@ export default {
           const mapOrder = buildList(enemyCount, mapCount, maps.value);
           const missionOrder = buildList(enemyCount + mapCount, missions.length, missions);
 
-          // console.log(`row ${i} (${ourTeams.value[i]}):`);
-          // console.log('  enemy teams priority:', enemyOrder);
-          // console.log('  maps priority:', mapOrder);
-          // console.log('  missions priority:', missionOrder);
-
           // store suggestions for this our team
           suggestions.value[ourTeams.value[i]] = {
             enemyOrder,
@@ -281,7 +292,6 @@ export default {
 
     // helpers to recommend best option given candidates
     function recommendEnemy(team, candidates) {
-      console.log('recommendEnemy', team, candidates);
       const order = suggestions.value[team]?.enemyOrder || [];
       let best = candidates[0];
       let bestIdx = order.length;
@@ -295,7 +305,6 @@ export default {
       return best;
     }
     function recommendMap(team, candidates) {
-      console.log('recommendMap', team, candidates);
       const order = suggestions.value[team]?.mapOrder || [];
       let best = candidates[0];
       let bestIdx = order.length;
@@ -309,7 +318,6 @@ export default {
       return best;
     }
     function recommendMission(team, candidates) {
-      console.log('recommendMission', team, candidates);
       const order = suggestions.value[team]?.missionOrder || [];
       let best = candidates[0];
       let bestIdx = order.length;
@@ -325,7 +333,6 @@ export default {
 
     // suggestion helpers for pairing step
     function suggestDefenderChoice(defenderTeam, options) {
-      console.log('suggestDefenderChoice', defenderTeam, options);
       // when our team is defender, options are enemy teams attacker selected
       if (!options || !options.length) return '';
       // use the specific defender team if provided, otherwise fall back to first team
@@ -334,7 +341,6 @@ export default {
     }
 
     function suggestAttackerSelection(enemyDefenderTeam) {
-      console.log('suggestAttackerSelection', enemyDefenderTeam);
       // when enemy is defender, pick the two of our teams that most prefer
       // to face that enemy defender (i.e. have that enemy highest in their enemyOrder)
       if (!enemyDefenderTeam) return '';
@@ -377,14 +383,11 @@ export default {
 
     // determine which side (our/enemy) holds a given role for current step
     // function sideForRole(role) {
-    //   console.log("aaaaaaaaaaaaaa",defenderSide);
     //   if (pairingStep.value === 0) return null;
     //   const defIsA = pairingStep.value % 2 === 1;
     //   const defSide = defIsA ? 'A' : 'B';
     //   const attSide = defIsA ? 'B' : 'A';
     //   const sideMap = { A: defenderSide.value === 'our' ? 'our' : 'enemy', B: defenderSide.value === 'our' ? 'enemy' : 'our' };
-    //   console.log('sideForRole after', role, pairingStep.value, sideMap);
-    //   console.log(role === 'defender' ? sideMap[defSide] : sideMap[attSide]);
     //   return role === 'defender' ? sideMap[defSide] : sideMap[attSide];
     // }
 
@@ -398,8 +401,6 @@ export default {
     }
 
     // function isOurTurn(role) {
-    //   console.log("isOurTurn:", role);
-    //   console.log("isOurTurn:",sideForRole(role) === 'our')
     //   return sideForRole(role) === 'our';
     // }
 
@@ -426,12 +427,14 @@ export default {
             // helpers to preserve pools across defenderSide flips
             const preservePools = ref(false);
             const savedPools = { a: [], b: [] };
-
             // helper to reset pools when teams or defenderSide change
             function resetPools() {
+              // console.log('resetPools called');
+              // console.log('current pools before reset', {preservePools, poolA: poolA.value, poolB: poolB.value, mapsPool: mapsPool.value, missionsPool: missionsPool.value });
               if (preservePools.value) {
                 poolA.value = [...savedPools.a];
                 poolB.value = [...savedPools.b];
+                // console.log('pools preserved from saved');
                 preservePools.value = false;
                 return;
               }
@@ -444,11 +447,13 @@ export default {
               }
               mapsPool.value = [...maps.value];
               missionsPool.value = [...missions.filter((m) => !bannedA.value.includes(m) && !bannedB.value.includes(m))];
+              // console.log('pools reset', { poolA: poolA.value, poolB: poolB.value, mapsPool: mapsPool.value, missionsPool: missionsPool.value });
             }
 
             watch([ourTeams, enemyTeams, defenderSide], resetPools);
 
             function applyBans() {
+              // console.log('applyBans called');
               missionsPool.value = missions.filter((m) => !bannedA.value.includes(m) && !bannedB.value.includes(m));
             }
 
@@ -457,21 +462,28 @@ export default {
 
               // when moving from step 0 to 1 we already handled bans earlier in the button
               if (step > 0) {
-                const def = step % 2 === 1 ? 'A' : 'B';
-                const att = def === 'A' ? 'B' : 'A';
+                // TUTAJ 2
+                // const def = step % 2 === 1 ? 'A' : 'B';
+                // const att = def === 'A' ? 'B' : 'A';
+                const def = 'A';
+                const att = 'B';
+                console.log('pools:',{poolA: poolA, poolB: poolB});
                 const defenderPool = def === 'A' ? poolA : poolB;
                 const attackerPool = att === 'A' ? poolA : poolB;
-
+                console.log('def/att pools:', {defenderPool: defenderPool.value, attackerPool: attackerPool.value});
                 const defenderChoice = pairingData['defenderChoice' + step];
                 const attackerOptions = pairingData['attackerOptions' + step] || [];
                 const attackerSelected = pairingData['attackerSelected' + step];
                 const mapChoice = pairingData['map' + step];
                 const missionChoice = pairingData['mission' + step];
-
+                console.log('nextPairing before', {pairingData, step, defenderChoice, attackerOptions, attackerSelected, mapChoice, missionChoice });
                 // remove defender's pick from their pool
                 if (defenderChoice) {
+                  
                   const idx = defenderPool.value.indexOf(defenderChoice);
+                  console.log('removing defender choice from pool', {idx, defenderChoice, defenderPool: defenderPool.value});
                   if (idx !== -1) defenderPool.value.splice(idx, 1);
+                  console.log('removing defender choice from pool', {defenderChoice, defenderPool: defenderPool.value});
                 }
 
                 // temporarily remove attacker options
@@ -505,15 +517,21 @@ export default {
                     missionsPool.value = missionsPool.value.filter((m) => m !== extra);
                   }
                 }
-
+                // console.log('nextPairing before swap', { step, defenderChoice, attackerOptions, attackerSelected, mapChoice, missionChoice });
                 // swap which side is Defender for the next pairing while preserving
                 // the current remaining pools so previously-removed teams aren't reset
+                // console.log('poolA/poolB', {poolA: JSON.parse(JSON.stringify(poolA.value)), poolB: JSON.parse(JSON.stringify(poolB.value))});
                 const prevA = poolA.value.slice();
                 const prevB = poolB.value.slice();
+                // console.log('prevA/prevB', {prevA, prevB});
+                // TUTAJ
                 savedPools.a = prevB;
                 savedPools.b = prevA;
+                // savedPools.a = prevA;
+                // savedPools.b = prevB;
                 preservePools.value = true;
                 defenderSide.value = defenderSide.value === 'our' ? 'enemy' : 'our';
+                // console.log('nextPairing after swap', {savedPools,defenderSide});
               }
 
               pairingStep.value++;
@@ -618,6 +636,20 @@ input {
 }
 select {
   padding: 3px;
-  
+}
+.pairing-step {
+  border: 1px solid black;
+  padding: 0em 1em 1em 1em
+}
+
+.pairing-actions {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+select::-webkit-scrollbar {
+  width: 1px;
 }
 </style>
